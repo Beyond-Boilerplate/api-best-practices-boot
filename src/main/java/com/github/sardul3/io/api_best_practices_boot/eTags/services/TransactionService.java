@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 
@@ -37,6 +38,7 @@ public class TransactionService {
      * @param to the account receiving the transaction (optional)
      * @return a list of transactions based on the specified filters
      */
+    @Cacheable(value = "transactionsCache", key = "#from + '_' + #to", unless = "#result == null || #result.isEmpty()")
     public List<Transaction> getAllTransactions(String from, String to) {
         if (!from.isEmpty() && !to.isEmpty()) {
             return transactionRepository.findByFromAccountAndToAccount(from, to);
@@ -69,6 +71,7 @@ public class TransactionService {
      * @param transaction the transaction details to save
      * @return the saved transaction
      */
+    @CacheEvict(value = "transactionsCache", allEntries = true)
     public Transaction saveTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
@@ -84,6 +87,7 @@ public class TransactionService {
      * @return the updated transaction
      * @throws EntityNotFoundException if the transaction with the specified ID is not found
      */
+    @CacheEvict(value = "transactionsCache", allEntries = true)
     @CachePut(value = "transactionCache", key = "#transactionId")
     public Transaction updateTransactionStatus(Long transactionId, Transaction.Status newStatus) {
         Optional<Transaction> transactionOpt = transactionRepository.findById(transactionId);
@@ -107,7 +111,10 @@ public class TransactionService {
      *
      * @param transactionId the ID of the transaction to delete
      */
-    @CacheEvict(value = "transactionCache", key = "#transactionId")
+    @Caching(evict = {
+            @CacheEvict(value = "transactionsCache", allEntries = true),  // Evict all entries from transactionsCache
+            @CacheEvict(value = "transactionCache", key = "#transactionId")  // Evict the specific entry from transactionCache
+    })
     public void deleteTransaction(Long transactionId) {
         transactionRepository.deleteById(transactionId);
     }
@@ -118,8 +125,10 @@ public class TransactionService {
      * The {@link CacheEvict} annotation with {@code allEntries = true} ensures that all cached transaction entries are cleared.
      * </p>
      */
-    @CacheEvict(value = "transactionCache", allEntries = true)
-    public void deleteAllTransactions() {
+    @Caching(evict = {
+            @CacheEvict(value = "transactionsCache", allEntries = true),  // Evict all entries from transactionsCache
+            @CacheEvict(value = "transactionCache", allEntries = true)  // Evict all transactionCache
+    })    public void deleteAllTransactions() {
         transactionRepository.deleteAll();
     }
 }

@@ -44,3 +44,7 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+springBoot {
+	mainClass = 'com.github.sardul3.io.api_best_practices_boot.ApiBestPracticesBootApplication'  // Replace with your actual main class
+}

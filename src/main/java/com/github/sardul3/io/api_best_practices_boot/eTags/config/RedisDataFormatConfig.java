@@ -7,6 +7,8 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+import java.time.Duration;
+
 /**
  * Configuration class for customizing Redis caching in the application.
  * <p>
@@ -30,6 +32,8 @@ public class RedisDataFormatConfig {
     @Bean
     public RedisCacheConfiguration cacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
+                // Set the TTL to 3 minutes (180 seconds)
+                .entryTtl(Duration.ofMinutes(3))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair
                                 .fromSerializer(new GenericJackson2JsonRedisSerializer()));

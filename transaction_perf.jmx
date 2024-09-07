@@ -1,0 +1,38 @@
+<HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Transaction" enabled="true">
+  <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+    <collectionProp name="Arguments.arguments"/>
+  </elementProp>
+  
+  <!-- Set the domain and port for your Spring Boot app running in the Docker network -->
+  <stringProp name="HTTPSampler.domain">spring-app</stringProp>
+  <stringProp name="HTTPSampler.port">8080</stringProp>
+  <stringProp name="HTTPSampler.protocol">http</stringProp>
+  <stringProp name="HTTPSampler.path">/api/transactions</stringProp>
+  <stringProp name="HTTPSampler.method">POST</stringProp>
+
+  <!-- Use Body Data for the JSON payload -->
+  <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+  <stringProp name="HTTPSampler.bodyData">
+    {
+      "fromAccount": "${fromAccount}",
+      "toAccount": "${toAccount}",
+      "amount": ${amount},
+      "status": "${status}"
+    }
+  </stringProp>
+
+  <!-- Set Content-Type to JSON -->
+  <elementProp name="HeaderManager.headers" elementType="HeaderManager" guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+    <collectionProp name="HeaderManager.headers">
+      <elementProp name="Content-Type" elementType="Header">
+        <stringProp name="Header.name">Content-Type</stringProp>
+        <stringProp name="Header.value">application/json</stringProp>
+      </elementProp>
+    </collectionProp>
+  </elementProp>
+
+  <!-- Enable HTTP Redirects and Keepalive -->
+  <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+  <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+  <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+</HTTPSamplerProxy>

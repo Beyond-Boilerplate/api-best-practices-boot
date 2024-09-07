@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  redis-master:
+    image: redis:6.2
+    container_name: redis-master
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis-master-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - redis-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_PASSWORD=yourpassword
+
+  redis-sentinel:
+    image: redis:6.2
+    container_name: redis-sentinel
+    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel.conf"]
+    volumes:
+      - ./redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
+    ports:
+      - "26379:26379"
+    depends_on:
+      redis-master:
+        condition: service_healthy  # Redis sentinel waits for Redis Master to be healthy
+    networks:
+      - redis-net
+
+  spring-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring-app
+    environment:
+      - SPRING_DATA_REDIS_HOST=redis-master
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=yourpassword
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis-master:
+        condition: service_healthy  # Wait for Redis health check
+    networks:
+      - redis-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  jmeter:
+    image: justb4/jmeter:5.5
+    container_name: jmeter
+    environment:
+      - JVM_ARGS="-Xms1024m -Xmx2048m"  # Set JVM memory for JMeter to prevent memory-related hangs
+    volumes:
+      - ./transaction_perf.jmx:/tests/api_performance_test.jmx  # Mount your JMX test plan
+      - ./transactions.csv:/tests/transactions.csv
+      - ./results:/tests/results  # Persist results
+      - ./reports:/tests/reports  # Persist HTML reports
+    command: >
+      -n -t /tests/api_performance_test.jmx -l /tests/results/results.jtl -e -o /tests/reports
+    depends_on:
+      spring-app:
+        condition: service_started  # JMeter waits for the Spring App to be up
+    networks:
+      - redis-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  redis-net:
+    driver: bridge
+
+volumes:
+  redis-master-data:
+  redis-slave-data:

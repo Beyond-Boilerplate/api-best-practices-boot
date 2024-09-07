@@ -99,7 +99,9 @@ public class TransactionController {
         // Generate a custom eTag using a hash based on transaction fields
         String eTag = ETagGenerator.generateETagForTransaction(transaction.get());
 
-        // Always return cached data, regardless of ETag matching
+        if (ifNoneMatch != null && ifNoneMatch.equals(eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
+        }
         return ResponseEntity.ok().eTag(eTag).body(transaction.get());
     }
 
@@ -112,7 +114,6 @@ public class TransactionController {
      * @return a ResponseEntity containing the updated transaction and HTTP status OK (200)
      */
     @PutMapping("/{id}/status")
-//    @CacheEvict(value = "transactionCache", key = "#id")
     public ResponseEntity<Transaction> updateTransactionStatus(
             @PathVariable Long id,
             @RequestParam Transaction.Status newStatus) {

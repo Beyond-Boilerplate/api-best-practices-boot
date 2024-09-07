@@ -1,0 +1,505 @@
+{
+  "info": {
+    "_postman_id": "12345678-abcd-efgh-ijkl-9876543210",
+    "name": "Automated Transaction Cache Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "transactionId",
+      "value": ""
+    },
+    {
+      "key": "eTag",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Transaction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"fromAccount\": \"UserA\", \"toAccount\": \"UserB\", \"amount\": 100.0, \"status\": \"ON_HOLD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction created successfully\", function () {",
+              "    pm.response.to.have.status(201);",
+              "    pm.environment.set(\"transactionId\", pm.response.json().transactionId);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction (Cache Miss)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Cache miss - Data fetched from DB\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json().transactionId).to.eql(pm.environment.get(\"transactionId\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction (Cache Hit)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Cache hit - Data fetched from cache\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json().transactionId).to.eql(pm.environment.get(\"transactionId\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction After Cache Clear",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Cache miss after clearing cache - Data fetched from DB again\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json().transactionId).to.eql(pm.environment.get(\"transactionId\"));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Transaction (for eTag Testing)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"fromAccount\": \"UserA\", \"toAccount\": \"UserB\", \"amount\": 200.0, \"status\": \"ON_HOLD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction created successfully\", function () {",
+              "    pm.response.to.have.status(201);",
+              "    pm.environment.set(\"transactionId\", pm.response.json().transactionId);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction with Initial Request (Store eTag)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction fetched successfully\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    const eTagHeader = pm.response.headers.get('ETag');",
+              "    pm.environment.set('eTag', eTagHeader);",
+              "    pm.expect(eTagHeader).to.be.a('string');",
+              "    pm.expect(eTagHeader).to.not.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction with eTag (304 Not Modified)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "If-None-Match",
+            "value": "{{eTag}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"304 Not Modified when eTag matches\", function () {",
+              "    pm.response.to.have.status(304);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Transaction Status (Invalidate eTag)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/status?newStatus=FLAGGED",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}", "status"],
+          "query": [
+            {
+              "key": "newStatus",
+              "value": "FLAGGED"
+            }]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction status updated\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction After Modification (New eTag)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction fetched with new eTag after modification\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    const newETagHeader = pm.response.headers.get('ETag');",
+              "    pm.expect(newETagHeader).to.be.a('string');",
+              "    pm.expect(newETagHeader).to.not.eql(pm.environment.get('eTag'));",
+              "    pm.environment.set('eTag', newETagHeader);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transaction with Invalidated eTag (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "If-None-Match",
+            "value": "{{eTag}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions", "{{transactionId}}"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"304 returned after modification, old eTag invalidated\", function () {",
+              "    pm.response.to.have.status(304);",
+              "    const updatedETagHeader = pm.response.headers.get('ETag');",
+              "    pm.expect(updatedETagHeader).to.not.eql(pm.environment.get('eTag'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transactions - Initial Request (Store eTag)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions?from=&to=",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"],
+          "query": [
+            {
+              "key": "from",
+              "value": ""
+            },
+            {
+              "key": "to",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction list fetched successfully\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    const eTagHeader = pm.response.headers.get('ETag');",
+              "    pm.environment.set('eTag', eTagHeader);",
+              "    pm.expect(eTagHeader).to.be.a('string');",
+              "    pm.expect(eTagHeader).to.not.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transactions with eTag (304 Not Modified)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "If-None-Match",
+            "value": "{{eTag}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions?from=&to=",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"],
+          "query": [
+            {
+              "key": "from",
+              "value": ""
+            },
+            {
+              "key": "to",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"304 Not Modified when eTag matches\", function () {",
+              "    pm.response.to.have.status(304);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transactions After Data Change (New eTag)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions?from=&to=",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"],
+          "query": [
+            {
+              "key": "from",
+              "value": "sagar"
+            },
+            {
+              "key": "to",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Transaction list fetched successfully after data change\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    const newETagHeader = pm.response.headers.get('ETag');",
+              "    pm.expect(newETagHeader).to.be.a('string');",
+              "    pm.expect(newETagHeader).to.not.eql(pm.environment.get('eTag'));",
+              "    pm.environment.set('eTag', newETagHeader);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transactions with Invalid eTag (200 OK)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "If-None-Match",
+            "value": "invalid-eTag"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions?from=&to=",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "transactions"],
+          "query": [
+            {
+              "key": "from",
+              "value": ""
+            },
+            {
+              "key": "to",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"200 OK when invalid eTag is provided\", function () {",
+              "    pm.response.to.have.status(200);",
+              "    const eTagHeader = pm.response.headers.get('ETag');",
+              "    pm.expect(eTagHeader).to.be.a('string');",
+              "    pm.expect(eTagHeader).to.not.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -25,6 +25,9 @@ FROM eclipse-temurin:21-jre-alpine
 # Set the working directory inside the container
 WORKDIR /app
 
+# Install curl for debugging or health checks (optional)
+RUN apk add --no-cache curl
+
 # Copy the built jar file from the builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 

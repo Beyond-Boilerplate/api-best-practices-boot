@@ -1,0 +1,526 @@
+{
+  "info": {
+    "_postman_id": "52bbdd3e-9982-448e-b66d-e0cdeee4f410",
+    "name": "Transaction API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10048771"
+  },
+  "item": [
+    {
+      "name": "Create Transaction 1",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Transaction created successfully with status 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fromAccount\": \"sagarp\",\n    \"toAccount\": \"yoonki\",\n    \"amount\": 190.00,\n    \"status\": \"ON_HOLD\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/transactions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "transactions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Transaction 2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Transaction created successfully with status 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fromAccount\": \"john\",\n    \"toAccount\": \"susan\",\n    \"amount\": 450.00,\n    \"status\": \"COMPLETED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/transactions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "transactions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Transaction 3",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Transaction created successfully with status 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fromAccount\": \"maria\",\n    \"toAccount\": \"jose\",\n    \"amount\": 600.00,\n    \"status\": \"BLOCKED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/transactions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "transactions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Transaction 4",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Transaction created successfully with status 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fromAccount\": \"alice\",\n    \"toAccount\": \"bob\",\n    \"amount\": 80.00,\n    \"status\": \"CANCELLED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/transactions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "transactions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Transaction 5",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Transaction created successfully with status 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fromAccount\": \"mark\",\n    \"toAccount\": \"jane\",\n    \"amount\": 500.00,\n    \"status\": \"FLAGGED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/transactions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "transactions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Pagination Test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct number of transactions returned\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.content.length).to.eql(3);",
+              "});",
+              "",
+              "pm.test(\"Pagination metadata is correct\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.page.number).to.eql(0);",
+              "    pm.expect(jsonData.page.size).to.eql(3);",
+              "    pm.expect(jsonData.page.totalElements).to.eql(5); // Total transactions seeded",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v2/transactions?page=0&size=3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v2",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sorting Test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct number of transactions returned\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.content.length).to.eql(5);",
+              "});",
+              "",
+              "pm.test(\"Transactions are sorted by amount in descending order\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    const amounts = jsonData.content.map(t => t.amount);",
+              "    pm.expect(amounts).to.eql([600, 500, 450, 190, 80]); // Expected sorted order",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v2/transactions?page=0&size=5&sort=amount,desc",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v2",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            },
+            {
+              "key": "sort",
+              "value": "amount,desc"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtering Test (amount > 300)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct number of transactions returned\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.content.length).to.eql(3); // 3 transactions with amount > 300",
+              "});",
+              "",
+              "pm.test(\"All transactions have amount greater than 300\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    jsonData.content.forEach(function (transaction) {",
+              "        pm.expect(transaction.amount).to.be.above(300);",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v2/transactions?page=0&size=5&amount%3E300",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v2",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            },
+            {
+              "key": "amount%3E300",
+              "value": null
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Multiple Filters Test (amount > 300 and status COMPLETED)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct number of transactions returned\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.content.length).to.eql(1); // 1 transaction matching both filters",
+              "});",
+              "",
+              "pm.test(\"All transactions have amount greater than 300 and status 'COMPLETED'\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    jsonData.content.forEach(function (transaction) {",
+              "        pm.expect(transaction.amount).to.be.above(300);",
+              "        pm.expect(transaction.status).to.eql(\"COMPLETED\");",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v2/transactions?page=0&size=5&status=COMPLETED",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v2",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            },
+            {
+              "key": "status",
+              "value": "COMPLETED"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sorting and Filtering Test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Correct number of transactions returned\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.content.length).to.eql(3); // 3 transactions with amount > 300",
+              "});",
+              "",
+              "pm.test(\"Transactions are sorted by status in ascending order\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    const statuses = jsonData.content.map(t => t.status);",
+              "    pm.expect(statuses).to.eql([\"BLOCKED\", \"COMPLETED\", \"FLAGGED\"]); // Expected sorted order by status",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v2/transactions?page=0&size=5&amount%3E300&sort=status,asc",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v2",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            },
+            {
+              "key": "amount%3E300",
+              "value": null
+            },
+            {
+              "key": "sort",
+              "value": "status,asc"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

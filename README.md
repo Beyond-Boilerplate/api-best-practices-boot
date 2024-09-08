@@ -1,18 +1,133 @@
-# API Best Practices with Idempotency
+Below is the extended **README** structure for the API Best Practices with Idempotency, eTags, Caching, and other essential features. This guide includes explanations, feature highlights, and the 50-point priority table for making APIs production-ready.
 
-This project demonstrates various best practices for handling API requests, 
+---
 
-1. **idempotency**. Idempotency ensures that repeated requests with the same parameters produce the same result without causing unintended side effects, making APIs more robust and user-friendly.
+# API Best Practices with Idempotency, eTags, Caching, and More
 
-[Idempotency Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/idempotency/README.md).
-2. **eTags and Caching**: eTags help optimize HTTP responses by minimizing bandwidth usage when resources haven't changed, while caching reduces the load on databases by storing frequently requested data in Redis. This section demonstrates how to implement eTags and Redis caching in Spring Boot, how to handle updates, and how to test these optimizations using Postman.
+This project demonstrates best practices for building robust, production-ready APIs. The API integrates features like idempotency, eTags, caching, pagination, filtering, sorting, and more to optimize performance, scalability, and security.
 
-[eTag and Caching Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/eTags/README.md).
+## Key Features
 
+1. **Idempotency**: Ensures repeated requests with the same idempotency key do not cause duplicate operations. This feature is especially important for APIs that process critical data (e.g., financial transactions) to avoid unintentional side effects.
 
+   [Idempotency Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/idempotency/README.md)
 
+2. **eTags and Caching**: eTags help optimize HTTP responses by minimizing bandwidth usage when resources haven't changed, while caching reduces the load on databases by storing frequently requested data in Redis.
 
-## Aspriration
+   [eTag and Caching Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/eTags/README.md)
+
+3. **Pagination, Filtering, and Sorting**: Improves performance by limiting large datasets, making APIs more flexible and responsive. This feature is essential for APIs returning large datasets.
+   [pagination, filter, sorting Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/pageFilterSort/README.md)
+
+4. **Comprehensive Error Handling**: Standardizes error responses to ensure users can debug issues effectively with meaningful error messages.
+
+5. **Rate Limiting**: Controls the number of API requests allowed within a given time period, reducing the risk of abuse or server overload.
+
+6. **Security Enhancements**: Implements JWT-based authentication and authorization to secure access to the API, ensuring that only authenticated users can access protected resources.
+
+---
+
+## Installation
+
+To install and run the project locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/sardul3/io-api-best-practices-boot.git
+
+# Navigate into the project directory
+cd io-api-best-practices-boot
+
+# Run the application
+./mvnw spring-boot:run
+```
+
+## API Endpoints
+
+| Endpoint                        | Description                                  | Methods   |
+|----------------------------------|----------------------------------------------|-----------|
+| `/api/v2/transactions`           | Handles transactions with filtering, sorting, and pagination. | `GET`, `POST` |
+| `/api/v2/transactions/{id}`      | Get a specific transaction by its ID.        | `GET`     |
+| `/api/v2/transactions/{id}`      | Update a transaction.                        | `PUT`, `PATCH` |
+| `/api/v2/transactions/{id}`      | Delete a transaction.                        | `DELETE`  |
+
+---
+
+## Idempotency
+
+Idempotency ensures that repeated requests with the same parameters result in the same operation without causing unintended side effects, especially for operations like financial transactions or resource creation.
+
+### How It Works:
+
+1. A client sends a request with an `Idempotency-Key` header.
+2. The server stores the result of the request under the key.
+3. If the client sends the same request again with the same key, the server returns the stored result without reprocessing.
+
+### Implementation:
+
+- **IdempotencyKeyFilter**: Ensures that idempotent requests are tracked, avoiding the possibility of duplicate processing.
+- **Persistence Layer**: Stores idempotency keys and their associated request responses in Redis.
+
+For more detailed implementation, refer to the [Idempotency Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/idempotency/README.md).
+
+---
+
+## eTags and Caching
+
+eTags are used to check if the resource has been modified since the last request. Caching is leveraged to store frequently requested data in memory, reducing database load and improving response times.
+
+### eTags Implementation:
+
+- **Shallow Validation**: Validates if the resource's timestamp has changed.
+- **Deep Validation**: Validates if the resource's actual content has changed (using a hash).
+
+### Redis Caching:
+
+Caching uses Redis to store the results of API queries. When a resource is requested again, the system first checks the cache before querying the database.
+
+For further details, refer to the [eTags and Caching Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/eTags/README.md).
+
+---
+
+## Pagination, Filtering, and Sorting
+
+This API supports dynamic filtering, sorting, and pagination to improve performance when returning large datasets.
+
+### Pagination:
+
+By default, the API returns paginated data to ensure that clients do not request too much data at once. You can control the page size and page number using query parameters:
+
+- `?page=0&size=10`: Fetches 10 records starting from page 0.
+
+### Filtering:
+
+Filters are applied dynamically based on query parameters. Example:
+
+- `?amount>300`: Filters transactions where the amount is greater than 300.
+
+### Sorting:
+
+The API supports sorting by multiple fields. Example:
+
+- `?sort=amount,desc`: Sorts transactions by amount in descending order.
+
+For more details, see the [Pagination, Filtering, and Sorting Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/pageFilterSort/README.md).
+
+---
+
+## Security
+
+The API uses JWT for authentication and authorization. Users must include a valid JWT token in the `Authorization` header for protected endpoints.
+
+### Example:
+```bash
+curl -H "Authorization: Bearer <your-token>" http://localhost:8080/api/v2/transactions
+```
+
+---
+
+## Aspriation
+
 Here's a table with 50 essential features and priorities to make your API robust, production-ready, and REST-compliant. These features cover various aspects like security, performance, documentation, and resilience.
 
 | No. | Feature | Description & Best Practices |
@@ -46,7 +161,9 @@ Here's a table with 50 essential features and priorities to make your API robust
 | 27  | **Bulk Operations Support** | Provides support for bulk operations (batch inserts, updates) to reduce the number of API calls. |
 | 28  | **Audit Logs** | Maintains a record of API operations for auditing and compliance purposes. |
 | 29  | **Rate Limiting Alerts and Metrics** | Integrates rate limiting with monitoring tools for alerting and tracking usage patterns. |
-| 30  | **Graceful Shutdown** | Ensures in-flight requests are handled properly during API shutdown. |
+| 30  | **Graceful Shutdown** | Ensures in-flight requests
+
+are handled properly during API shutdown. |
 | 31  | **API Client SDK Generation** | Provides auto-generated SDKs for various programming languages using OpenAPI or Swagger. |
 | 32  | **Multi-tenancy Support** | Supports multiple tenants or clients with isolation for data and configuration. |
 | 33  | **Transactional Integrity** | Implements proper transaction management to ensure data consistency. |
@@ -68,4 +185,10 @@ Here's a table with 50 essential features and priorities to make your API robust
 | 49  | **Caching Headers (Expires, Cache-Control)** | Uses caching headers to inform clients how long they can cache responses. |
 | 50  | **Database Indexing** | Optimizes database performance with proper indexing of frequently queried fields. |
 
-These 50 features ensure that your API is not only functional but also secure, scalable, and efficient, adhering to best practices and modern standards.
+---
+
+## Conclusion
+
+This project is designed to showcase best practices for building robust, scalable, and production-ready APIs. Through idempotency, caching, pagination, filtering, and sorting, it ensures that APIs are efficient, resilient, and easy to use.
+
+For more details, please refer to the specific sections in the linked documentation or contact the team for further guidance.

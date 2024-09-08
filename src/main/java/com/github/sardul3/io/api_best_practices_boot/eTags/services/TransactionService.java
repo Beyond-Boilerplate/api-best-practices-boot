@@ -2,12 +2,20 @@ package com.github.sardul3.io.api_best_practices_boot.eTags.services;
 
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.repos.TransactionRepository;
+import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.caching.TransactionCacheService;
+import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
+import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.TransactionSpecificationBuilder;
+import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.model.PaginatedTransaction;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 
@@ -25,9 +33,10 @@ public class TransactionService {
 
 
     private final TransactionRepository transactionRepository;
-
-    public TransactionService(TransactionRepository transactionRepository) {
+    private final TransactionCacheService transactionCacheService;
+    public TransactionService(TransactionRepository transactionRepository, TransactionCacheService transactionCacheService) {
         this.transactionRepository = transactionRepository;
+        this.transactionCacheService = transactionCacheService;
     }
 
     /**
@@ -48,6 +57,29 @@ public class TransactionService {
             return transactionRepository.findByToAccount(to);
         }
         return transactionRepository.findAll();
+    }
+
+//    @Cacheable(value = "transactionsPFSCache", key = "T(com.github.sardul3.io.api_best_practices_boot.pageFilterSort.caching.PageFilterSortCacheKeyGenerator).generateKey(#filters, #pageable)")
+//    public Page<Transaction> getAllTransactionsWithPage(List<FilterCriteria> filters,  Pageable pageable) {
+//        TransactionSpecificationBuilder builder = new TransactionSpecificationBuilder();
+//        filters.forEach(filter -> builder.with(filter.getKey(), filter.getOperation(), filter.getValue()));
+//        Specification<Transaction> spec = builder.build();
+//        return transactionRepository.findAll(spec, pageable);
+//    }
+
+    public Page<Transaction> getAllTransactionsWithPage(List<FilterCriteria> filters, Pageable pageable) {
+        // Now we call the cached method from another service, going through the proxy
+        PaginatedTransaction transactions = transactionCacheService.getAllTransactionsWithCache(filters, pageable);
+
+        return getPaginatedTransactions(transactions, pageable);
+    }
+
+    public Page<Transaction> getPaginatedTransactions(PaginatedTransaction transactions, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), transactions.getTransactions().size());
+        List<Transaction> paginatedList = transactions.getTransactions().subList(start, end);
+
+        return new PageImpl<>(paginatedList, pageable, transactions.getTotal());
     }
 
     /**
@@ -87,7 +119,10 @@ public class TransactionService {
      * @return the updated transaction
      * @throws EntityNotFoundException if the transaction with the specified ID is not found
      */
-    @CacheEvict(value = "transactionsCache", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "transactionsCache", allEntries = true),
+            @CacheEvict(value = "transactionsPFSCache", allEntries = true),
+    })
     @CachePut(value = "transactionCache", key = "#transactionId")
     public Transaction updateTransactionStatus(Long transactionId, Transaction.Status newStatus) {
         Optional<Transaction> transactionOpt = transactionRepository.findById(transactionId);
@@ -113,6 +148,7 @@ public class TransactionService {
      */
     @Caching(evict = {
             @CacheEvict(value = "transactionsCache", allEntries = true),  // Evict all entries from transactionsCache
+            @CacheEvict(value = "transactionsPFSCache", allEntries = true),  // Evict all entries from transactionsCache
             @CacheEvict(value = "transactionCache", key = "#transactionId")  // Evict the specific entry from transactionCache
     })
     public void deleteTransaction(Long transactionId) {
@@ -127,9 +163,12 @@ public class TransactionService {
      */
     @Caching(evict = {
             @CacheEvict(value = "transactionsCache", allEntries = true),  // Evict all entries from transactionsCache
+            @CacheEvict(value = "transactionsPFSCache", allEntries = true),  // Evict all entries from transactionsCache
             @CacheEvict(value = "transactionCache", allEntries = true)  // Evict all transactionCache
     })    public void deleteAllTransactions() {
         transactionRepository.deleteAll();
     }
+
+
 }
 

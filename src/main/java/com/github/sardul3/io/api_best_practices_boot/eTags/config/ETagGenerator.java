@@ -8,6 +8,7 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 /**
  * Utility class for generating eTags for transactions based on their state.
  * <p>
@@ -27,7 +28,8 @@ public class ETagGenerator {
     public static String generateETag(List<Transaction> transactions) {
         // Combine transaction IDs and the total number of transactions to ensure uniqueness
         String combinedTransactions = transactions.stream()
-                .map(t -> t.getTransactionId().toString())
+                .map(transaction -> transaction.getTransactionId() + transaction.getFromAccount() +
+                        transaction.getToAccount() + transaction.getAmount() + transaction.getStatus().toString())
                 .collect(Collectors.joining()) + transactions.size();
 
         // Generate MD5 hash of the combined string

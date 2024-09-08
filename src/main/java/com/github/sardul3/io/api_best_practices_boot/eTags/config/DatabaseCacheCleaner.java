@@ -40,6 +40,9 @@ public class DatabaseCacheCleaner {
         if (transactionCount == 0) {
             // Database is empty, clear the cache
             cacheManager.getCache("transactionCache").clear();
+            cacheManager.getCache("transactionsCache").clear();
+            cacheManager.getCache("transactionsPFSCache").clear();
+
             log.warn("Cache cleared as the database is empty on application startup");
         }
     }

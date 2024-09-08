@@ -31,7 +31,7 @@ public class TransactionsControllerPaged {
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestParam Map<String, String> filterParams,
             Pageable pageable) {
-
+        log.info("getTransactions called with filters: {}, pageInfo {}", filterParams, pageable);
         // Build the list of filters to be applied
         List<FilterCriteria> filters = FilterUtils.buildFilterCriteria(filterParams);
 

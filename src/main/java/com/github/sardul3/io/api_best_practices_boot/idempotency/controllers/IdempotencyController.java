@@ -1,6 +1,7 @@
 package com.github.sardul3.io.api_best_practices_boot.idempotency.controllers;
 
 import com.github.sardul3.io.api_best_practices_boot.idempotency.services.IdempotencyService;
+import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +33,7 @@ public class IdempotencyController {
      *
      * @return ResponseEntity containing the generated idempotency key.
      */
+    @EndpointDescribe("generate idempotency key")
     @GetMapping("server-generated/generate-key")
     public ResponseEntity<String> generateIdempotencyKey() {
         String idempotencyKey = UUID.randomUUID().toString();

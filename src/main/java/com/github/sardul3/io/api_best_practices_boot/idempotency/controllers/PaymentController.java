@@ -2,6 +2,7 @@ package com.github.sardul3.io.api_best_practices_boot.idempotency.controllers;
 
 import com.github.sardul3.io.api_best_practices_boot.idempotency.exceptions.*;
 import com.github.sardul3.io.api_best_practices_boot.idempotency.services.IdempotencyService;
+import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,7 @@ public class PaymentController {
      * @param paymentDetails The payment details (e.g., amount, currency).
      * @return A success response with the transaction ID, or the cached result if the request was repeated.
      */
+    @EndpointDescribe("create new payment")
     @PostMapping("/payment")
     public ResponseEntity<String> processPayment(@RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
                                                  @RequestBody Map<String, String> paymentDetails) {
@@ -92,6 +94,7 @@ public class PaymentController {
      * @param idempotencyKey The idempotency key associated with the payment request.
      * @return The status of the payment, or an error if no payment was found for the key.
      */
+    @EndpointDescribe("get payment status")
     @GetMapping("/payment-status")
     public ResponseEntity<Object> getPaymentStatus(@RequestHeader("Idempotency-Key") String idempotencyKey) {
         // Retrieve the payment status from Redis

@@ -3,6 +3,7 @@ package com.github.sardul3.io.api_best_practices_boot.pageFilterSort.controllers
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
+import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +27,13 @@ public class TransactionsControllerPaged {
         this.transactionService = transactionService;
     }
 
+    @EndpointDescribe("fetch all transactions")
     @GetMapping
     public ResponseEntity<Page<Transaction>> getTransactions(
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestParam Map<String, String> filterParams,
             Pageable pageable) {
-        log.info("getTransactions called with filters: {}, pageInfo {}", filterParams, pageable);
+        log.debug("getTransactions called with filters: {}, pageInfo {}", filterParams, pageable);
         // Build the list of filters to be applied
         List<FilterCriteria> filters = FilterUtils.buildFilterCriteria(filterParams);
 

@@ -1,14 +1,20 @@
 <configuration>
 
+    <!-- Console appender for general logs -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!-- Add correlationId from MDC (Mapped Diagnostic Context) to log output -->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{correlationId}] - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{correlationId}] [%X{httpMethod}] [%X{requestURL}] - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- Root logger for general logs -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
     </root>
+
+    <!-- Performance logger configuration (optional, if you have separate logs for performance) -->
+    <logger name="performanceLogger" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
 
 </configuration>

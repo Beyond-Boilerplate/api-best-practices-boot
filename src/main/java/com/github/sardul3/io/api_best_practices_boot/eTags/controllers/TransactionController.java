@@ -3,6 +3,7 @@ package com.github.sardul3.io.api_best_practices_boot.eTags.controllers;
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
+import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -40,6 +41,7 @@ public class TransactionController {
      * @param transaction the transaction details to create
      * @return a ResponseEntity containing the created transaction and HTTP status CREATED (201)
      */
+    @EndpointDescribe("create a new transaction")
     @PostMapping
     public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
         Transaction savedTransaction = transactionService.saveTransaction(transaction);
@@ -55,6 +57,7 @@ public class TransactionController {
      * @param ifNoneMatch the eTag header sent by the client to check for resource modifications
      * @return a ResponseEntity containing the transactions and HTTP status OK (200), or NOT_MODIFIED (304) if the eTag matches
      */
+    @EndpointDescribe("get all transactions (v1)")
     @GetMapping
     public ResponseEntity<List<Transaction>> getTransactions(
             @RequestParam(required = false, defaultValue = "") String from,
@@ -80,6 +83,7 @@ public class TransactionController {
      * @param ifNoneMatch the eTag header sent by the client to check for resource modifications
      * @return a ResponseEntity containing the transaction and HTTP status OK (200), or NOT_MODIFIED (304) if the eTag matches
      */
+    @EndpointDescribe("get details on a individual transaction")
     @GetMapping("/{id}")
     public ResponseEntity<Transaction> getTransaction(
             @PathVariable Long id,
@@ -113,6 +117,7 @@ public class TransactionController {
      * @param newStatus the new status to set for the transaction
      * @return a ResponseEntity containing the updated transaction and HTTP status OK (200)
      */
+    @EndpointDescribe("update a transaction")
     @PutMapping("/{id}/status")
     public ResponseEntity<Transaction> updateTransactionStatus(
             @PathVariable Long id,

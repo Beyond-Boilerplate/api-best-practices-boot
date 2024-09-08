@@ -38,6 +38,10 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok:1.18.34'
 	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
+	// Metrics and health checkpoints
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-core'
+
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

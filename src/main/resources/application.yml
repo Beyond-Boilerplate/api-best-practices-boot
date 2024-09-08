@@ -25,6 +25,25 @@ spring:
   cache:
     type: redis
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,loggers  # Expose health, info, and loggers endpoints
+
+  endpoint:
+    health:
+      show-details: always  # Always show detailed health information in the response
+
+  health:
+    probes:
+      enabled: true  # Enable readiness and liveness probes
+
+  simple:
+    metrics:
+      export:
+        enabled: true
+
 # Custom properties for idempotency settings
 idempotency:
   lock-expiration: 5 # In seconds

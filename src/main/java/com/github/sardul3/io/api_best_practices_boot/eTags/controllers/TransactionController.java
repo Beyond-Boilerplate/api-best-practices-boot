@@ -44,7 +44,10 @@ public class TransactionController {
     @EndpointDescribe("create a new transaction")
     @PostMapping
     public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
+        log.debug("Saving a new transaction fromAccount={}, toAccount={}, amount={}",
+                transaction.getFromAccount(), transaction.getToAccount(), transaction.getAmount());
         Transaction savedTransaction = transactionService.saveTransaction(transaction);
+        log.debug("Transaction saved successfully with ID: {}", savedTransaction.getTransactionId());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTransaction);
     }
 
@@ -63,12 +66,13 @@ public class TransactionController {
             @RequestParam(required = false, defaultValue = "") String from,
             @RequestParam(required = false, defaultValue = "") String to,
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch) {
-
+        log.debug("Fetching transactions with optional filters: fromAccount={}, toAccount={}", from, to);
         List<Transaction> transactions = transactionService.getAllTransactions(from, to);
-
+        log.debug("Fetched {} transactions from the database", transactions.size());
         String eTag = ETagGenerator.generateETag(transactions);
-
+        log.debug("Generated eTag for the transactions list: {}", eTag);
         if (ifNoneMatch != null && ifNoneMatch.equals(eTag)) {
+            log.debug("eTag match found. Returning 304 NOT_MODIFIED");
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
         }
 
@@ -88,22 +92,25 @@ public class TransactionController {
     public ResponseEntity<Transaction> getTransaction(
             @PathVariable Long id,
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch) {
-
+        log.debug("Fetching transaction with ID: {}", id);
         Cache cache = cacheManager.getCache("transactionCache");
         if (cache != null && cache.get(id) != null) {
-            // Cache hit, call your custom method
-            log.info("Fetching transaction from the cache for transactionId: {}", id);
+            log.debug("Cache hit for transactionId: {}", id);
+        } else {
+            log.debug("Cache miss for transactionId: {}", id);
         }
         Optional<Transaction> transaction = transactionService.getTransactionById(id);
 
         if (transaction.isEmpty()) {
+            log.warn("Transaction with ID {} not found", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
         // Generate a custom eTag using a hash based on transaction fields
         String eTag = ETagGenerator.generateETagForTransaction(transaction.get());
+        log.debug("Generated eTag for transaction with ID {}: {}", id, eTag);
 
         if (ifNoneMatch != null && ifNoneMatch.equals(eTag)) {
+            log.debug("eTag match found for transaction with ID {}. Returning 304 NOT_MODIFIED", id);
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
         }
         return ResponseEntity.ok().eTag(eTag).body(transaction.get());
@@ -122,11 +129,12 @@ public class TransactionController {
     public ResponseEntity<Transaction> updateTransactionStatus(
             @PathVariable Long id,
             @RequestParam Transaction.Status newStatus) {
-
+        log.debug("Updating status of transaction ID: {} to {}", id, newStatus);
         Transaction updatedTransaction = transactionService.updateTransactionStatus(id, newStatus);
-
+        log.debug("Transaction ID {} status updated to {}", id, newStatus);
         // Generate eTag for the updated transaction
         String eTag = ETagGenerator.generateETagForTransaction(updatedTransaction);
+        log.debug("Generated eTag for updated transaction with ID {}: {}", id, eTag);
 
         return ResponseEntity.ok().eTag(eTag).body(updatedTransaction);
     }

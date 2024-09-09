@@ -6,6 +6,7 @@ import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.caching.Tran
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.TransactionSpecificationBuilder;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.model.PaginatedTransaction;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,14 +60,9 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-//    @Cacheable(value = "transactionsPFSCache", key = "T(com.github.sardul3.io.api_best_practices_boot.pageFilterSort.caching.PageFilterSortCacheKeyGenerator).generateKey(#filters, #pageable)")
-//    public Page<Transaction> getAllTransactionsWithPage(List<FilterCriteria> filters,  Pageable pageable) {
-//        TransactionSpecificationBuilder builder = new TransactionSpecificationBuilder();
-//        filters.forEach(filter -> builder.with(filter.getKey(), filter.getOperation(), filter.getValue()));
-//        Specification<Transaction> spec = builder.build();
-//        return transactionRepository.findAll(spec, pageable);
-//    }
-
+    @Observed(name = "transactions.all.db",
+            contextualName = "getting-all-transactions",
+            lowCardinalityKeyValues = {"GET", "transactions"})
     public Page<Transaction> getAllTransactionsWithPage(List<FilterCriteria> filters, Pageable pageable) {
         // Now we call the cached method from another service, going through the proxy
         PaginatedTransaction transactions = transactionCacheService.getAllTransactionsWithCache(filters, pageable);
@@ -74,6 +70,9 @@ public class TransactionService {
         return getPaginatedTransactions(transactions, pageable);
     }
 
+    @Observed(name = "transactions.all.page",
+            contextualName = "creating-page-all-transactions",
+            lowCardinalityKeyValues = {"GET", "transactions"})
     public Page<Transaction> getPaginatedTransactions(PaginatedTransaction transactions, Pageable pageable) {
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), transactions.getTransactions().size());

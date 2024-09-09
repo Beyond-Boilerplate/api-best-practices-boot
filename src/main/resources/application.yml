@@ -55,3 +55,7 @@ management:
 idempotency:
   lock-expiration: 5 # In seconds
   cache-expiration: 3600 # 1 hour in seconds
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}, %X{spanId:-}, %X{correlationId:-}] [%X{httpMethod:-} %X{requestURL:-}] [%logger{36}] - %msg%n"

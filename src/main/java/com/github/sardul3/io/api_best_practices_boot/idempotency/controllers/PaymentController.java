@@ -3,6 +3,7 @@ package com.github.sardul3.io.api_best_practices_boot.idempotency.controllers;
 import com.github.sardul3.io.api_best_practices_boot.idempotency.exceptions.*;
 import com.github.sardul3.io.api_best_practices_boot.idempotency.services.IdempotencyService;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
+import io.micrometer.observation.annotation.Observed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api")
+@Observed
 public class PaymentController {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);

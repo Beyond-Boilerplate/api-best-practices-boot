@@ -1,6 +1,7 @@
 package com.github.sardul3.io.api_best_practices_boot.eTags.config;
 
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
+import io.micrometer.observation.annotation.Observed;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,6 +26,7 @@ public class ETagGenerator {
      * @param transactions the list of transactions to generate the eTag for
      * @return the MD5 hash of the concatenated transaction data, used as the eTag
      */
+    @Observed
     public static String generateETag(List<Transaction> transactions) {
         // Combine transaction IDs and the total number of transactions to ensure uniqueness
         String combinedTransactions = transactions.stream()

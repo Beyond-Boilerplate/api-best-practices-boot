@@ -5,6 +5,7 @@ import com.github.sardul3.io.api_best_practices_boot.eTags.repos.TransactionRepo
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.TransactionSpecificationBuilder;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.model.PaginatedTransaction;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,9 @@ public class TransactionCacheService {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Observed(name = "transactions.all",
+            contextualName = "db-or-cache-get-all-transactions",
+            lowCardinalityKeyValues = {"GET", "transactions"})
     @Cacheable(
             value = "transactionsPFSCache",
             key = "T(com.github.sardul3.io.api_best_practices_boot.pageFilterSort.caching.PageFilterSortCacheKeyGenerator).generateKey(#filters, #pageable)",

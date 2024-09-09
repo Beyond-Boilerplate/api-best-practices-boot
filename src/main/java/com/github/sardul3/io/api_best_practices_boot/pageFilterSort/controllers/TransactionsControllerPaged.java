@@ -6,6 +6,7 @@ import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionS
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterUtils;
+import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v2/transactions")
 @Slf4j
+@Observed
 public class TransactionsControllerPaged {
 
     private final TransactionService transactionService;
@@ -29,6 +31,7 @@ public class TransactionsControllerPaged {
 
     @EndpointDescribe("fetch all transactions")
     @GetMapping
+    @Observed
     public ResponseEntity<Page<Transaction>> getTransactions(
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestParam Map<String, String> filterParams,

@@ -1,0 +1,57 @@
+services:
+  # Application Section (Spring App and JMeter)
+  spring-app:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: spring-app
+    environment:
+      - SPRING_DATA_REDIS_HOST=redis-master
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=yourpassword
+      - LOKI_HOST=loki
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis-master:
+        condition: service_healthy  # Wait for Redis to be healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8080/actuator/health/readiness | grep UP || exit 1"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  jmeter:
+    image: justb4/jmeter:5.5
+    container_name: jmeter
+    environment:
+      - JVM_ARGS="-Xms1024m -Xmx2048m"
+    volumes:
+      - ./transaction_perf.jmx:/tests/api_performance_test.jmx
+      - ./transactions.csv:/tests/transactions.csv
+      - ./results:/tests/results
+      - ./reports:/tests/reports
+    command: >
+      -n -t /tests/api_performance_test.jmx -l /tests/results/results.jtl -e -o /tests/reports
+    depends_on:
+      spring-app:
+        condition: service_healthy  # Wait for Spring Boot to be healthy
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  app-network:
+    driver: bridge
+

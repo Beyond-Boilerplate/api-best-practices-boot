@@ -1,5 +1,7 @@
 package com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering;
 
+import io.micrometer.observation.annotation.Observed;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ public class FilterUtils {
      * @param filterParams Map of query parameters representing filters
      * @return List of FilterCriteria built from query parameters
      */
+    @Observed
     public static List<FilterCriteria> buildFilterCriteria(Map<String, String> filterParams) {
         List<FilterCriteria> filters = new ArrayList<>();
 

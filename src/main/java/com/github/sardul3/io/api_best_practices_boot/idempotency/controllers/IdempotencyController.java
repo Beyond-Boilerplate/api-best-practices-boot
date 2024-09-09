@@ -2,6 +2,7 @@ package com.github.sardul3.io.api_best_practices_boot.idempotency.controllers;
 
 import com.github.sardul3.io.api_best_practices_boot.idempotency.services.IdempotencyService;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api")
+@Observed
 public class IdempotencyController {
     private final IdempotencyService idempotencyService;
 

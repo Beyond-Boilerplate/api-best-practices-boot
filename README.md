@@ -10,20 +10,19 @@ This project demonstrates best practices for building robust, production-ready A
 
 1. **Idempotency**: Ensures repeated requests with the same idempotency key do not cause duplicate operations. This feature is especially important for APIs that process critical data (e.g., financial transactions) to avoid unintentional side effects.
 
-   [Idempotency Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/idempotency/README.md)
+   [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/idempotency/README.md)
 
 2. **eTags and Caching**: eTags help optimize HTTP responses by minimizing bandwidth usage when resources haven't changed, while caching reduces the load on databases by storing frequently requested data in Redis.
 
-   [eTag and Caching Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/eTags/README.md)
+   [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/eTags/README.md)
 
 3. **Pagination, Filtering, and Sorting**: Improves performance by limiting large datasets, making APIs more flexible and responsive. This feature is essential for APIs returning large datasets.
-   [pagination, filter, sorting Documentation](./src/main/java/com/github/sardul3/io/api_best_practices_boot/pageFilterSort/README.md)
+   
+   [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/pageFilterSort/README.md)
 
-4. **Comprehensive Error Handling**: Standardizes error responses to ensure users can debug issues effectively with meaningful error messages.
-
-5. **Rate Limiting**: Controls the number of API requests allowed within a given time period, reducing the risk of abuse or server overload.
-
-6. **Security Enhancements**: Implements JWT-based authentication and authorization to secure access to the API, ensuring that only authenticated users can access protected resources.
+4. **Rate Limiting**: Controls the number of API requests allowed within a given time period, reducing the risk of abuse or server overload.
+   
+   [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/rateLimitAndThrottling/README.md)
 
 ---
 

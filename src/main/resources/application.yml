@@ -27,6 +27,7 @@ spring:
         sort: amount,desc
   cache:
     type: redis
+    cache-names: transactionsCache,transactionCache,transactionsPFSCache
 
 management:
   endpoints:

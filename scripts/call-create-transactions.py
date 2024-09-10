@@ -73,7 +73,7 @@ def main(api_url, frequency, content_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="API Transaction Caller")
     parser.add_argument('--url', type=str, default='http://localhost:8080/api/transactions', help='API URL to call')
-    parser.add_argument('--frequency', type=int, default=10, help='Time interval between API calls in seconds')
+    parser.add_argument('--frequency', type=float, default=10.0, help='Time interval between API calls in seconds (can be a decimal number)')
     parser.add_argument('--content-type', type=str, default='application/json', help='Content-Type of the request')
 
     args = parser.parse_args()

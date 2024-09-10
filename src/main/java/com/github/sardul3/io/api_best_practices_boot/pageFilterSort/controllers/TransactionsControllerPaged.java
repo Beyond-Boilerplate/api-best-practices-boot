@@ -7,6 +7,7 @@ import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspec
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterUtils;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit;
+import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimitAndThrottle;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,7 +31,7 @@ public class TransactionsControllerPaged {
         this.transactionService = transactionService;
     }
 
-    @RateLimit
+    @RateLimitAndThrottle
     @EndpointDescribe("fetch all transactions")
     @GetMapping
     @Observed

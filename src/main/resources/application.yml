@@ -71,11 +71,35 @@ rate-limits:
     /api/transactions:
       GET:
         limit: 10
-        duration: 60000
+        duration: 60000 # 60 seconds (10 req/min)
       POST:
         limit: 20
-        duration: 60000
+        duration: 60000 # 60 seconds (20 req/min)
     /api/v2/transactions:
       GET:
         limit: 10
-        duration: 60000
+        duration: 60000 # 60 seconds (10 req/min)
+
+rate-limits-bucket:
+  default:
+    bucket-size: 10
+    refill-tokens: 1
+    refill-duration: 60  # 10 req / min + 1 req / min
+    get:
+      bucket-size: 10
+      refill-tokens: 1
+      refill-duration: 60  # 10 req / min + 1 req / min
+    post:
+      bucket-size: 50
+      refill-tokens: 20
+      refill-duration: 60  # 5 req / min + 5 req / min
+  endpoints:
+    /api/transactions:
+      get:
+        bucket-size: 2
+        refill-tokens: 2
+        refill-duration: 60  # in seconds
+      post:
+        bucket-size: 100
+        refill-tokens: 5
+        refill-duration: 60  # in seconds

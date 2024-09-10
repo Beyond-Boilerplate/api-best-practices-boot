@@ -3,7 +3,9 @@ package com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.con
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.exception.RateLimitExceededException;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -11,6 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Aspect responsible for enforcing rate limiting on methods annotated with {@link RateLimit}.
@@ -52,53 +55,42 @@ public class RateLimitAspect {
     @Value("${APP_RATE_DURATIONINMS:#{60000}}")
     private long rateDuration;
 
+    private final RedisTemplate<String, String> redisTemplate;
+
+    public RateLimitAspect(RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
     /**
-     * Method that is executed before any method annotated with {@link RateLimit}.
+     * Executed by each call of a method annotated with {@link RateLimit}.
+     * This version uses Redis to store request counts per client IP.
+     * If the request count exceeds the rate limit, a {@link RateLimitExceededException} is thrown.
      *
-     * <p>This method tracks the number of requests made by the client (identified by IP address)
-     * and checks if it exceeds the allowed limit. If the request count exceeds the rate limit
-     * within the defined duration, a {@link RateLimitExceededException} is thrown.</p>
-     *
-     * <p>Requests older than the configured duration (e.g., 60 seconds) are automatically
-     * cleaned up and no longer counted.</p>
-     *
-     * @throws RateLimitExceededException if the rate limit is exceeded for the given client IP.
+     * @throws RateLimitExceededException if rate limit for a given IP has been exceeded
      */
     @Before("@annotation(com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit)")
     public void rateLimit() {
         final ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-        final String key = requestAttributes.getRequest().getRemoteAddr();
-        final long currentTime = System.currentTimeMillis();
-        requestCounts.putIfAbsent(key, new ArrayList<>());
-        requestCounts.get(key).add(currentTime);
-        cleanUpRequestCounts(currentTime);
-        if (requestCounts.get(key).size() > rateLimit) {
-            throw new RateLimitExceededException(String.format(ERROR_MESSAGE, requestAttributes.getRequest().getRequestURI(), key, rateDuration));
+        final String clientIp = requestAttributes.getRequest().getRemoteAddr();
+        final String redisKey = "rate_limit:" + clientIp;
+
+        Long currentRequestCount = redisTemplate.opsForValue().increment(redisKey); // Increment the request count for the current IP
+        if (currentRequestCount == null) {
+            // Redis operation failed or key is missing, so handle gracefully by initializing the request count
+            currentRequestCount = 1L;
+            redisTemplate.opsForValue().set(redisKey, String.valueOf(currentRequestCount));
+            redisTemplate.expire(redisKey, rateDuration, TimeUnit.MILLISECONDS);
+        }
+
+        // Set the expiration time only when the key is created or if we initialized a new key
+        if (currentRequestCount == 1) {
+            redisTemplate.expire(redisKey, rateDuration, TimeUnit.MILLISECONDS);
+        }
+
+        // If request count exceeds the rate limit, throw an exception
+        if (currentRequestCount > rateLimit) {
+            throw new RateLimitExceededException(String.format(ERROR_MESSAGE, requestAttributes.getRequest().getRequestURI(), clientIp, rateDuration));
         }
     }
 
-    /**
-     * Helper method to clean up old requests that are outside the rate limiting time window.
-     *
-     * <p>This method goes through all tracked requests and removes any that are older than
-     * the configured {@link #rateDuration}.</p>
-     *
-     * @param currentTime the current time in milliseconds.
-     */
-    private void cleanUpRequestCounts(final long currentTime) {
-        requestCounts.values().forEach(l -> {
-            l.removeIf(t -> timeIsTooOld(currentTime, t));
-        });
-    }
-
-    /**
-     * Determines whether a request is too old to be considered for rate limiting.
-     *
-     * @param currentTime the current time in milliseconds.
-     * @param timeToCheck the time of the request to be checked.
-     * @return true if the request is older than the allowed rate duration, false otherwise.
-     */
-    private boolean timeIsTooOld(final long currentTime, final long timeToCheck) {
-        return currentTime - timeToCheck > rateDuration;
-    }
 }

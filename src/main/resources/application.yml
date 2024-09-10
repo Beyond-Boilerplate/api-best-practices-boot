@@ -104,3 +104,9 @@ rate-limits-bucket:
         bucket-size: 100
         refill-tokens: 5
         refill-duration: 60  # in seconds
+springdoc:
+  api-docs:
+#    path: /v3/api-docs
+    path: /openapi.yaml
+  swagger-ui:
+    path: /swagger-ui.html

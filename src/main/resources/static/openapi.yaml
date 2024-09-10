@@ -1,0 +1,315 @@
+openapi: 3.0.1
+info:
+  title: Transaction and Payment API
+  version: v0
+  description: This API provides endpoints for managing transactions, payments, and Redis health checks. It supports updating transaction status, managing idempotency, and checking system health.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /api/transactions/{id}/status:
+    put:
+      tags:
+        - transaction-controller
+      summary: Update the status of a specific transaction
+      description: This endpoint updates the status of a given transaction based on its ID. The new status can be one of the predefined statuses.
+      operationId: updateTransactionStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the transaction to update
+          schema:
+            type: integer
+            format: int64
+        - name: newStatus
+          in: query
+          required: true
+          description: 'New status to set for the transaction. Possible values: FLAGGED, ON_HOLD, BLOCKED, COMPLETED, CANCELLED.'
+          schema:
+            type: string
+            enum:
+              - FLAGGED
+              - ON_HOLD
+              - BLOCKED
+              - COMPLETED
+              - CANCELLED
+      responses:
+        '200':
+          description: Transaction status updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Transaction'
+  /api/transactions:
+    get:
+      tags:
+        - transaction-controller
+      summary: Retrieve a list of transactions
+      description: Fetch a list of transactions within a specified date range or by providing an If-None-Match header for caching optimization.
+      operationId: getTransactions_1
+      parameters:
+        - name: from
+          in: query
+          required: false
+          description: Start date for filtering transactions (optional)
+          schema:
+            type: string
+            format: date-time
+            default: ''
+        - name: to
+          in: query
+          required: false
+          description: End date for filtering transactions (optional)
+          schema:
+            type: string
+            format: date-time
+            default: ''
+        - name: If-None-Match
+          in: header
+          required: false
+          description: ETag header for cache validation
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transactions retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    post:
+      tags:
+        - transaction-controller
+      summary: Create a new transaction
+      description: Submit a new transaction with the required details like fromAccount, toAccount, and amount.
+      operationId: createTransaction
+      requestBody:
+        description: Transaction object to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: Transaction created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Transaction'
+  /api/payment:
+    post:
+      tags:
+        - payment-controller
+      summary: Process a payment
+      description: Process a payment request and ensure idempotency using the Idempotency-Key header.
+      operationId: processPayment
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Idempotency key to ensure that the same payment request is not processed more than once
+          schema:
+            type: string
+      requestBody:
+        description: Payment details object
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            '*/*':
+              schema:
+                type: string
+  /management/log:
+    get:
+      tags:
+        - log-level-controller
+      summary: Set log level dynamically
+      description: Set the logging level for the application dynamically via this endpoint.
+      operationId: setLogLevel
+      parameters:
+        - name: level
+          in: query
+          required: true
+          description: Desired log level (e.g., DEBUG, INFO, WARN, ERROR)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Log level set successfully
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/v2/transactions:
+    get:
+      tags:
+        - transactions-controller-paged
+      summary: Retrieve paged transactions
+      description: Fetch a paged list of transactions, supporting sorting and filtering via query parameters.
+      operationId: getTransactions
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          description: ETag header for cache validation
+          schema:
+            type: string
+        - name: filterParams
+          in: query
+          required: true
+          description: Filter parameters for narrowing down transactions
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: pageable
+          in: query
+          required: true
+          description: Pagination details
+          schema:
+            $ref: '#/components/schemas/Pageable'
+      responses:
+        '200':
+          description: Paged list of transactions retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageTransaction'
+components:
+  schemas:
+    Transaction:
+      type: object
+      description: A transaction represents the movement of funds between accounts
+      properties:
+        transactionId:
+          type: integer
+          format: int64
+          description: Unique identifier for the transaction
+        fromAccount:
+          type: string
+          description: Source account for the transaction
+        toAccount:
+          type: string
+          description: Destination account for the transaction
+        amount:
+          type: number
+          format: double
+          description: Amount of money transferred
+        status:
+          type: string
+          enum:
+            - FLAGGED
+            - ON_HOLD
+            - BLOCKED
+            - COMPLETED
+            - CANCELLED
+          description: Current status of the transaction
+    Pageable:
+      type: object
+      description: Details for pagination of results
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Page number starting from 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Number of results per page
+        sort:
+          type: array
+          items:
+            type: string
+          description: 'Sorting criteria in the format: property(,asc|desc). Default sort order is ascending.'
+    PageTransaction:
+      type: object
+      description: Paged response for transactions
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements across all pages
+        first:
+          type: boolean
+          description: Whether this is the first page
+        last:
+          type: boolean
+          description: Whether this is the last page
+        size:
+          type: integer
+          format: int32
+          description: Number of elements in the current page
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+          description: List of transactions in the current page
+        number:
+          type: integer
+          format: int32
+          description: Current page number
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        numberOfElements:
+          type: integer
+          format: int32
+          description: Number of elements in the current page
+        empty:
+          type: boolean
+          description: Whether the current page is empty
+    PageableObject:
+      type: object
+      description: Pageable object representing pagination information
+      properties:
+        offset:
+          type: integer
+          format: int64
+          description: Offset from the beginning of the result set
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        paged:
+          type: boolean
+          description: Whether pagination is enabled
+        pageNumber:
+          type: integer
+          format: int32
+          description: Current page number
+        pageSize:
+          type: integer
+          format: int32
+          description: Size of the page
+        unpaged:
+          type: boolean
+          description: Whether pagination is disabled
+    SortObject:
+      type: object
+      description: Object representing sorting information
+      properties:
+        empty:
+          type: boolean
+          description: Whether the sort criteria is empty
+        sorted:
+          type: boolean
+          description: Whether sorting is applied
+        unsorted:
+          type: boolean
+          description: Whether sorting is not applied

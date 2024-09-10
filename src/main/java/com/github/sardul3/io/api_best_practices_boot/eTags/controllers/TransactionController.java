@@ -4,6 +4,7 @@ import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
+import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class TransactionController {
      * @param transaction the transaction details to create
      * @return a ResponseEntity containing the created transaction and HTTP status CREATED (201)
      */
+    @RateLimit
     @EndpointDescribe("create a new transaction")
     @PostMapping
     public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {

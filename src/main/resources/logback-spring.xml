@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+
     <include resource="org/springframework/boot/logging/logback/base.xml" />
 
     <springProperty scope="context" name="appName" source="spring.application.name"/>
@@ -23,10 +24,6 @@
         <appender-ref ref="LOKI" />
     </logger>
 
-    <root level="INFO">
-        <appender-ref ref="LOKI"/>
-    </root>
-
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
@@ -36,6 +33,6 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="LOKI"/>
     </root>
 </configuration>

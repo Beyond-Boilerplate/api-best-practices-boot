@@ -8,22 +8,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.HttpHeaders;
 
 /**
- * Global exception handler for {@link RateLimitExceededException}.
+ * Global exception handler for handling rate limit exceptions.
  *
- * <p>This handler is responsible for catching {@link RateLimitExceededException}s thrown
- * during request processing and returning a structured error response with HTTP status 429
- * (Too Many Requests).</p>
- *
- * <p>The error response includes a unique error ID, status code, error message, timestamp,
- * and the request path that triggered the rate limit. This provides a standardized error
- * response format for API clients.</p>
+ * <p>This handler captures {@link RateLimitExceededException} exceptions thrown during
+ * request processing and returns a structured error response with HTTP status 429 (Too Many Requests).
+ * Additionally, a "Retry-After" header is included in the response, informing the client
+ * when they can retry the request.</p>
  *
  * <p><strong>Key Features:</strong></p>
  * <ul>
- *     <li>Handles all rate limit exceptions and logs them with a unique error ID.</li>
- *     <li>Provides a clean JSON response with detailed information about the error.</li>
+ *     <li>Captures all {@link RateLimitExceededException} and provides a structured response.</li>
+ *     <li>Returns a 429 status code with the "Retry-After" header.</li>
+ *     <li>Logs the exception details with a unique error ID for traceability.</li>
  * </ul>
  */
 @ControllerAdvice
@@ -32,20 +31,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class RateLimitExceededHandler {
 
     /**
-     * Handles {@link RateLimitExceededException} by returning an {@link ApiErrorMessage}.
+     * Handles {@link RateLimitExceededException} by generating a structured error response
+     * and returning a "Retry-After" header, which informs the client how long they must wait
+     * before retrying their request.
      *
-     * <p>This method is triggered when the rate limit is exceeded, and it generates a structured
-     * error response for the client, including details about the request that caused the error.</p>
-     *
-     * @param rateLimitException the exception thrown when rate limiting is exceeded.
-     * @param request the current HTTP request.
-     * @return a {@link ResponseEntity} containing the error message and HTTP status 429.
+     * @param rateLimitException the exception thrown when the rate limit is exceeded.
+     * @param request the HTTP request that triggered the rate limit.
+     * @return a {@link ResponseEntity} containing the error details and HTTP status 429.
      */
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ApiErrorMessage> handleInvalidFieldsInValidJson(final RateLimitExceededException rateLimitException, final HttpServletRequest request) {
         final ApiErrorMessage apiErrorMessage = rateLimitException.toApiErrorMessage(request.getRequestURI());
         logIncomingCallException(rateLimitException, apiErrorMessage);
-        return new ResponseEntity<>(apiErrorMessage, HttpStatus.TOO_MANY_REQUESTS);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Retry-After", String.valueOf(rateLimitException.getRetryAfterSeconds()));
+        return new ResponseEntity<>(apiErrorMessage, headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     /**

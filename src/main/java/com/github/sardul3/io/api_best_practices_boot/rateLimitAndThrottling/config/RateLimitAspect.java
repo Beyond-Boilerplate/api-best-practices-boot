@@ -1,10 +1,14 @@
 package com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config;
 
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.exception.RateLimitExceededException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -16,37 +20,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Aspect responsible for enforcing rate limiting on methods annotated with {@link RateLimit}.
+ * Aspect responsible for applying rate limiting to methods annotated with {@link RateLimit}.
  *
- * <p>This class intercepts methods annotated with {@link RateLimit} and tracks the number
- * of requests from each client IP address. If the number of requests from a particular IP
- * exceeds the defined limit within a certain time window, a {@link RateLimitExceededException}
- * is thrown.</p>
+ * <p>This class intercepts methods annotated with {@link RateLimit} and tracks the number of
+ * requests made by a client (based on their IP address) to the target endpoint. If the number
+ * of requests exceeds the specified limit within the defined time window, the client will receive
+ * an HTTP 429 (Too Many Requests) response.</p>
+ *
+ * <p>The rate limit can either be set directly via the {@link RateLimit} annotation or defined in
+ * external configuration (e.g., application.yml). Redis is used to store the request count per client,
+ * identified by their IP address and the target HTTP method.</p>
  *
  * <p><strong>Key Features:</strong></p>
  * <ul>
- *     <li>Simple, in-memory request tracking using a {@link ConcurrentHashMap}.</li>
- *     <li>IP-based identification of clients. This means requests from the same IP are
- *     counted together.</li>
- *     <li>Requests older than the specified duration (e.g., 60 seconds) are automatically
- *     forgotten.</li>
- *     <li>If a client exceeds the allowed number of requests within the specified time window,
- *     an error response (HTTP 429 Too Many Requests) is returned.</li>
+ *     <li>Uses Redis for distributed rate limiting.</li>
+ *     <li>Supports configurable rate limits and durations on a per-endpoint and per-method basis.</li>
+ *     <li>Provides IP-based request tracking.</li>
+ *     <li>Returns the "Retry-After" header in 429 responses, indicating when the client can retry.</li>
  * </ul>
  *
- * <p><strong>Important Considerations:</strong></p>
+ * <p><strong>Usage Considerations:</strong></p>
  * <ul>
- *     <li>This is a basic implementation meant for local use and testing. For production
- *     systems, consider more sophisticated rate limiting techniques like Redis-based
- *     distributed rate limiting, request prioritization, or token bucket algorithms.</li>
- *     <li>IP-based identification may not work well in cases where clients are behind
- *     proxies or network address translation (NAT).</li>
+ *     <li>This implementation uses the client's IP address for tracking requests, which may not be suitable
+ *     in cases where clients are behind proxies or using NAT. For production environments, it is recommended
+ *     to configure X-Forwarded-For headers or similar mechanisms to accurately identify the client.</li>
  * </ul>
  */
 @Aspect
 @Component
 public class RateLimitAspect {
-    public static final String ERROR_MESSAGE = "To many request at endpoint %s from IP %s! Please try again after %d milliseconds!";
+    public static final String ERROR_MESSAGE = "Too many requests to %s [%s] from IP %s! Please try again after %d seconds!";
     private final ConcurrentHashMap<String, List<Long>> requestCounts = new ConcurrentHashMap<>();
 
     @Value("${app.rate.limit:#{200}}")
@@ -56,41 +59,89 @@ public class RateLimitAspect {
     private long rateDuration;
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final Environment environment;
 
-    public RateLimitAspect(RedisTemplate<String, String> redisTemplate) {
+    public RateLimitAspect(RedisTemplate<String, String> redisTemplate, Environment environment) {
         this.redisTemplate = redisTemplate;
+        this.environment = environment;
     }
 
     /**
-     * Executed by each call of a method annotated with {@link RateLimit}.
-     * This version uses Redis to store request counts per client IP.
-     * If the request count exceeds the rate limit, a {@link RateLimitExceededException} is thrown.
+     * Intercepts methods annotated with {@link RateLimit} and checks if the number of requests
+     * from a client IP has exceeded the allowed rate limit within the specified time window.
      *
-     * @throws RateLimitExceededException if rate limit for a given IP has been exceeded
+     * <p>If the rate limit is exceeded, a {@link RateLimitExceededException} is thrown, and the client
+     * receives a 429 Too Many Requests response along with a "Retry-After" header indicating when
+     * they can send the next request.</p>
+     *
+     * @param joinPoint the join point of the intercepted method.
+     * @param rateLimit the rate limit annotation applied to the method.
+     * @return the result of the intercepted method execution, if the rate limit is not exceeded.
+     * @throws Throwable if the rate limit is exceeded or any other error occurs.
      */
-    @Before("@annotation(com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit)")
-    public void rateLimit() {
-        final ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-        final String clientIp = requestAttributes.getRequest().getRemoteAddr();
-        final String redisKey = "rate_limit:" + clientIp;
+    @Around("@annotation(rateLimit)")
+    public Object rateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+        String clientIp = request.getRemoteAddr();
+        String requestUri = request.getRequestURI();
+        String httpMethod = request.getMethod();
+        String redisKey = "rate_limit:" + clientIp + ":" + requestUri + ":" + httpMethod;
 
-        Long currentRequestCount = redisTemplate.opsForValue().increment(redisKey); // Increment the request count for the current IP
+        // Resolve rate limit and duration from annotation or configuration
+        int limit = resolveRateLimit(requestUri, httpMethod, rateLimit.limit());
+        long duration = resolveRateDuration(requestUri, httpMethod, rateLimit.duration());
+
+        Long currentRequestCount = redisTemplate.opsForValue().increment(redisKey);
         if (currentRequestCount == null) {
-            // Redis operation failed or key is missing, so handle gracefully by initializing the request count
             currentRequestCount = 1L;
             redisTemplate.opsForValue().set(redisKey, String.valueOf(currentRequestCount));
-            redisTemplate.expire(redisKey, rateDuration, TimeUnit.MILLISECONDS);
+            redisTemplate.expire(redisKey, duration, TimeUnit.MILLISECONDS);
         }
 
-        // Set the expiration time only when the key is created or if we initialized a new key
         if (currentRequestCount == 1) {
-            redisTemplate.expire(redisKey, rateDuration, TimeUnit.MILLISECONDS);
+            redisTemplate.expire(redisKey, duration, TimeUnit.MILLISECONDS);
         }
 
-        // If request count exceeds the rate limit, throw an exception
-        if (currentRequestCount > rateLimit) {
-            throw new RateLimitExceededException(String.format(ERROR_MESSAGE, requestAttributes.getRequest().getRequestURI(), clientIp, rateDuration));
+        if (currentRequestCount > limit) {
+            long retryAfterSeconds = duration / 1000;
+            throw new RateLimitExceededException(String.format(ERROR_MESSAGE, requestUri, httpMethod, clientIp, retryAfterSeconds), retryAfterSeconds);
         }
+
+        return joinPoint.proceed(); // Proceed with the method execution
     }
 
+    /**
+     * Resolve rate limit for the given endpoint and HTTP method from the configuration or annotation.
+     *
+     * @param endpoint   the requested URI
+     * @param method     the HTTP method (GET, POST, etc.)
+     * @param annotationLimit the limit specified in the annotation (-1 means use config)
+     * @return the rate limit value
+     */
+    private int resolveRateLimit(String endpoint, String method, int annotationLimit) {
+        if (annotationLimit > 0) {
+            return annotationLimit; // Use the limit from the annotation if provided
+        }
+
+        String configLimit = environment.getProperty("rate-limits.endpoints." + endpoint + "." + method + ".limit");
+        return configLimit != null ? Integer.parseInt(configLimit) : environment.getProperty("rate-limits.default.limit", Integer.class, 200);
+    }
+
+    /**
+     * Resolve rate duration for the given endpoint and HTTP method from the configuration or annotation.
+     *
+     * @param endpoint   the requested URI
+     * @param method     the HTTP method (GET, POST, etc.)
+     * @param annotationDuration the duration specified in the annotation (-1 means use config)
+     * @return the rate duration value
+     */
+    private long resolveRateDuration(String endpoint, String method, long annotationDuration) {
+        if (annotationDuration > 0) {
+            return annotationDuration; // Use the duration from the annotation if provided
+        }
+
+        String configDuration = environment.getProperty("rate-limits.endpoints." + endpoint + "." + method + ".duration");
+        return configDuration != null ? Long.parseLong(configDuration) : environment.getProperty("rate-limits.default.duration", Long.class, 60000L);
+    }
 }

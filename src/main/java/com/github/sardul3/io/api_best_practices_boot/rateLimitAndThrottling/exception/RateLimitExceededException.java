@@ -1,5 +1,6 @@
 package com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -13,10 +14,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * but it can be extended to include more details like retry-after headers, request-specific data, etc.</p>
  */
 @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+@Getter
 public class RateLimitExceededException extends RuntimeException {
 
-    public RateLimitExceededException(final String message) {
+    private final long retryAfterSeconds; // The time to retry after (in seconds)
+
+    public RateLimitExceededException(final String message, long retryAfterSeconds) {
         super(message);
+        this.retryAfterSeconds = retryAfterSeconds;
     }
 
     /**

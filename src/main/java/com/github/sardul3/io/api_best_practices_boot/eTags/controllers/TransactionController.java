@@ -44,7 +44,7 @@ public class TransactionController {
      * @param transaction the transaction details to create
      * @return a ResponseEntity containing the created transaction and HTTP status CREATED (201)
      */
-    @RateLimit
+    @RateLimit(limit=100, duration=200000)
     @EndpointDescribe("create a new transaction")
     @PostMapping
     public ResponseEntity<Transaction> createTransaction(@RequestBody Transaction transaction) {
@@ -64,6 +64,7 @@ public class TransactionController {
      * @param ifNoneMatch the eTag header sent by the client to check for resource modifications
      * @return a ResponseEntity containing the transactions and HTTP status OK (200), or NOT_MODIFIED (304) if the eTag matches
      */
+    @RateLimit
     @EndpointDescribe("get all transactions (v1)")
     @GetMapping
     public ResponseEntity<List<Transaction>> getTransactions(

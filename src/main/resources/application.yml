@@ -63,7 +63,19 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level){INFO=green, WARN=yellow, ERROR=red} [%clr(%X{traceId:-}){cyan}, %clr(%X{spanId:-}){green}, %clr(%X{correlationId:-}){blue}] [%clr(%X{httpMethod:-}){POST=magenta, GET=yellow, PUT=red} %X{requestURL:-}] [%logger{36}] - %msg%n"
 
-app:
-  rate:
-    limit: 20
-    durationinms: 60000
+rate-limits:
+  default:
+    limit: 200
+    duration: 60000
+  endpoints:
+    /api/transactions:
+      GET:
+        limit: 10
+        duration: 60000
+      POST:
+        limit: 20
+        duration: 60000
+    /api/v2/transactions:
+      GET:
+        limit: 10
+        duration: 60000

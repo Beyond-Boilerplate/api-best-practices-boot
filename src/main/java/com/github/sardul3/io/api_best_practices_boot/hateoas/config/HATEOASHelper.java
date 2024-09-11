@@ -1,4 +1,4 @@
-package com.github.sardul3.io.api_best_practices_boot.hateoas.controllers;
+package com.github.sardul3.io.api_best_practices_boot.hateoas.config;
 
 import com.github.sardul3.io.api_best_practices_boot.eTags.controllers.TransactionController;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;

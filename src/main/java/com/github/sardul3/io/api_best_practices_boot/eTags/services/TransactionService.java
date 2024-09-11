@@ -66,19 +66,7 @@ public class TransactionService {
     public Page<Transaction> getAllTransactionsWithPage(List<FilterCriteria> filters, Pageable pageable) {
         // Now we call the cached method from another service, going through the proxy
         PaginatedTransaction transactions = transactionCacheService.getAllTransactionsWithCache(filters, pageable);
-
-        return getPaginatedTransactions(transactions, pageable);
-    }
-
-    @Observed(name = "transactions.all.page",
-            contextualName = "creating-page-all-transactions",
-            lowCardinalityKeyValues = {"GET", "transactions"})
-    public Page<Transaction> getPaginatedTransactions(PaginatedTransaction transactions, Pageable pageable) {
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), transactions.getTransactions().size());
-        List<Transaction> paginatedList = transactions.getTransactions().subList(start, end);
-
-        return new PageImpl<>(paginatedList, pageable, transactions.getTotal());
+        return new PageImpl<>(transactions.getTransactions(), pageable, transactions.getTotal());
     }
 
     /**

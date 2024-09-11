@@ -3,31 +3,23 @@ package com.github.sardul3.io.api_best_practices_boot.eTags.controllers;
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
-import com.github.sardul3.io.api_best_practices_boot.hateoas.controllers.HATEOASHelper;
+import com.github.sardul3.io.api_best_practices_boot.hateoas.config.HATEOASHelper;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
-import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.controllers.TransactionsControllerPaged;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimitAndThrottle;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * REST controller for managing transactions and handling HTTP requests related to transactions.

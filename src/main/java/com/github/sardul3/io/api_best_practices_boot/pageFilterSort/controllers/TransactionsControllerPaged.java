@@ -3,12 +3,11 @@ package com.github.sardul3.io.api_best_practices_boot.pageFilterSort.controllers
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
-import com.github.sardul3.io.api_best_practices_boot.hateoas.config.TransactionModelAssembler;
+import com.github.sardul3.io.api_best_practices_boot.hateoas.models.TransactionModelAssembler;
 import com.github.sardul3.io.api_best_practices_boot.hateoas.models.TransactionModel;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterUtils;
-import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimitAndThrottle;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
@@ -61,9 +60,9 @@ public class TransactionsControllerPaged {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
         }
 
-//        return ResponseEntity.ok().eTag(eTag).body(transactions);
         return ResponseEntity
                 .ok()
+                .eTag(eTag)
                 .contentType(MediaTypes.HAL_JSON)
                 .body(pagedResourcesAssembler.toModel(transactions, transactionModelAssembler));
 

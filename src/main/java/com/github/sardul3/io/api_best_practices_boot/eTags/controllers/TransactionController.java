@@ -3,7 +3,9 @@ package com.github.sardul3.io.api_best_practices_boot.eTags.controllers;
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
+import com.github.sardul3.io.api_best_practices_boot.hateoas.controllers.HATEOASHelper;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
+import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.controllers.TransactionsControllerPaged;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimit;
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimitAndThrottle;
 import io.micrometer.observation.annotation.Observed;
@@ -13,6 +15,9 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +25,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * REST controller for managing transactions and handling HTTP requests related to transactions.
@@ -95,7 +103,7 @@ public class TransactionController {
      */
     @EndpointDescribe("get details on a individual transaction")
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getTransaction(
+    public ResponseEntity<EntityModel<Transaction>> getTransaction(
             @PathVariable Long id,
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch) {
         log.debug("Fetching transaction with ID: {}", id);
@@ -119,7 +127,9 @@ public class TransactionController {
             log.debug("eTag match found for transaction with ID {}. Returning 304 NOT_MODIFIED", id);
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
         }
-        return ResponseEntity.ok().eTag(eTag).body(transaction.get());
+        EntityModel<Transaction> transactionModel = HATEOASHelper.generateEntityLinks(
+                transaction.get(), transaction.get().getTransactionId());
+        return ResponseEntity.ok().eTag(eTag).body(transactionModel);
     }
 
     /**

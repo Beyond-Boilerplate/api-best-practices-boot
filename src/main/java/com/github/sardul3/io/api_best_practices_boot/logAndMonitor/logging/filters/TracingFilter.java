@@ -44,7 +44,7 @@ public class TracingFilter implements Filter {
 
         // Get the correlation ID from the request or generate a new one
         String correlationId = httpServletRequest.getHeader(CORRELATION_ID_HEADER);
-        if (correlationId == null || correlationId.isEmpty()) {
+        if (correlationId == null || correlationId.isBlank()) {
             correlationId = UUID.randomUUID().toString();
         }
 

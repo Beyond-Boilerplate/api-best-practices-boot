@@ -102,7 +102,10 @@ public class TransactionService {
      * @param transaction the transaction details to save
      * @return the saved transaction
      */
-    @CacheEvict(value = "transactionsCache", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "transactionsCache", allEntries = true),  // Evict all entries from transactionsCache
+            @CacheEvict(value = "transactionsPFSCache", allEntries = true),  // Evict all entries from transactionsCache
+    })
     public Transaction saveTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
     }

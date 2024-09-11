@@ -10,5 +10,5 @@ import org.springframework.hateoas.RepresentationModel;
 public class TransactionModel extends RepresentationModel<TransactionModel> {
     public String from;
     public String to;
-    double amount;
+    public double amount;
 }

@@ -3,6 +3,8 @@ package com.github.sardul3.io.api_best_practices_boot.pageFilterSort.controllers
 import com.github.sardul3.io.api_best_practices_boot.eTags.config.ETagGenerator;
 import com.github.sardul3.io.api_best_practices_boot.eTags.models.Transaction;
 import com.github.sardul3.io.api_best_practices_boot.eTags.services.TransactionService;
+import com.github.sardul3.io.api_best_practices_boot.hateoas.config.TransactionModelAssembler;
+import com.github.sardul3.io.api_best_practices_boot.hateoas.models.TransactionModel;
 import com.github.sardul3.io.api_best_practices_boot.logAndMonitor.logging.aspects.EndpointDescribe;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterCriteria;
 import com.github.sardul3.io.api_best_practices_boot.pageFilterSort.filtering.FilterUtils;
@@ -10,8 +12,12 @@ import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.conf
 import com.github.sardul3.io.api_best_practices_boot.rateLimitAndThrottling.config.RateLimitAndThrottle;
 import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,16 +32,20 @@ import java.util.Map;
 public class TransactionsControllerPaged {
 
     private final TransactionService transactionService;
+    @Autowired
+    private  PagedResourcesAssembler<Transaction> pagedResourcesAssembler;
+    private final TransactionModelAssembler transactionModelAssembler;
 
-    public TransactionsControllerPaged(TransactionService transactionService) {
+    public TransactionsControllerPaged(TransactionService transactionService, TransactionModelAssembler transactionModelAssembler) {
         this.transactionService = transactionService;
+        this.transactionModelAssembler = transactionModelAssembler;
     }
 
     @RateLimitAndThrottle
     @EndpointDescribe("fetch all transactions")
     @GetMapping
     @Observed
-    public ResponseEntity<Page<Transaction>> getTransactions(
+    public ResponseEntity<PagedModel<TransactionModel>> getTransactions(
             @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestParam Map<String, String> filterParams,
             Pageable pageable) {
@@ -51,6 +61,11 @@ public class TransactionsControllerPaged {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
         }
 
-        return ResponseEntity.ok().eTag(eTag).body(transactions);
+//        return ResponseEntity.ok().eTag(eTag).body(transactions);
+        return ResponseEntity
+                .ok()
+                .contentType(MediaTypes.HAL_JSON)
+                .body(pagedResourcesAssembler.toModel(transactions, transactionModelAssembler));
+
     }
 }

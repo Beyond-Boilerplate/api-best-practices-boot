@@ -20,9 +20,15 @@ This project demonstrates best practices for building robust, production-ready A
    
    [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/pageFilterSort/README.md)
 
+
 4. **Rate Limiting**: Controls the number of API requests allowed within a given time period, reducing the risk of abuse or server overload.
    
    [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/rateLimitAndThrottling/README.md)
+
+5. HATEOAS (Hypermedia as the Engine of Application State): Facilitates dynamic navigation and discoverability of resources through hypermedia links included in the API response. HATEOAS ensures the client can interact with the API based on the links provided by the server, enabling a more flexible and evolving API structure.
+
+   [more info](./src/main/java/com/github/sardul3/io/api_best_practices_boot/hateoas/README.md)
+
 
 ---
 

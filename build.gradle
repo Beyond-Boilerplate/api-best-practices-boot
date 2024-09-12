@@ -71,6 +71,44 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// Define the exclusions once
+def jacocoExclusions = [
+		'**/models/**',      // Exclude all classes under models package
+		'**/configs/**',     // Exclude all classes under configs package
+		'**/ApiBestPracticesBootApplication.class'  // Exclude main application class
+]
+
+tasks.jacocoTestReport {
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: jacocoExclusions)
+		}))
+	}
+}
+
+tasks.jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			// Apply to the entire project, with specific exclusions
+			excludes = jacocoExclusions
+			limit {
+				counter = 'INSTRUCTION'   // You can use 'LINE', 'BRANCH', etc. instead of 'INSTRUCTION'
+				value = 'COVEREDRATIO'
+				minimum = 0.10            // Set the overall project coverage threshold to 80%
+			}
+		}
+	}
+}
+
+tasks.check {
+	dependsOn tasks.jacocoTestCoverageVerification
+}
+
 springBoot {
 	mainClass = 'com.github.sardul3.io.api_best_practices_boot.ApiBestPracticesBootApplication'  // Replace with your actual main class
 }

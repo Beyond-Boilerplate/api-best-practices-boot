@@ -1,3 +1,11 @@
+server:
+  tomcat:
+    max-http-header-size: 16384  # 16 KB (adjust as needed)
+    max-swallow-size: 20971520   # 20 MB
+    connection-timeout: 20000    # 20 seconds
+    max-threads: 200             # Optional
+    max-http-form-post-size: 20971520
+
 spring:
   application:
     name: api-best-practices-boot
@@ -110,3 +118,42 @@ springdoc:
     path: /openapi.yaml
   swagger-ui:
     path: /swagger-ui.html
+
+
+temporal:
+  workflows:
+    schedulePaymentWorkflow:
+      versions:
+        v1:
+          executionTimeout: 30m
+          runTimeout: 15m
+          taskQueue: "ScheduledPaymentQueue"
+        v2:
+          executionTimeout: 25m
+          runTimeout: 12m
+          taskQueue: "ScheduledPaymentQueue_v2"
+  activities:
+    createScheduledTask:
+      versions:
+        v1:
+          scheduleToCloseTimeout: 5m
+          startToCloseTimeout: 2m
+        v2:
+          scheduleToCloseTimeout: 6m
+          startToCloseTimeout: 3m
+          retry:
+            initialInterval: 12s
+            maxAttempts: 4
+            backoffCoefficient: 1.5
+    runSchedulePayment:
+      versions:
+        v1:
+          scheduleToCloseTimeout: 10m
+          startToCloseTimeout: 5m
+        v2:
+          scheduleToCloseTimeout: 12m
+          startToCloseTimeout: 6m
+          retry:
+            initialInterval: 20s
+            maxAttempts: 4
+            backoffCoefficient: 2.0

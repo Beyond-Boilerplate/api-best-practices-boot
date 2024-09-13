@@ -64,6 +64,9 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-hateoas'
 
+	implementation 'io.temporal:temporal-sdk:1.16.0'
+
+
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
